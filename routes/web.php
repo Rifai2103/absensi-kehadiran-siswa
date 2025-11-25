@@ -17,7 +17,7 @@ Route::view('/welcome', 'welcome')->name('welcome');
 
 // Redirect root ke welcome
 Route::get('/', function () {
-    return redirect()->route('welcome');
+    return redirect()->route('login');
 });
 
 // API untuk IoT (tanpa auth session; gunakan throttle)
@@ -44,7 +44,7 @@ Route::middleware(['auth', 'role:admin,guru,kepala_sekolah'])->group(function ()
     Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 
     // Grup dashboard dengan middleware role spesifik
-    Route::middleware(['role:admin,kepala_sekolah'])->group(function () {
+    Route::middleware(['role:admin'])->group(function () {
         Route::get('/dashboard/admin', [DashboardController::class, 'admin'])->name('dashboard.admin');
 
         // CRUD Admin & Kepala Sekolah

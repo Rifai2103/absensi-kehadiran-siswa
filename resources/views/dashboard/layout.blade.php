@@ -28,10 +28,11 @@
 
             <!-- Sidebar - Brand -->
             <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ route('dashboard.index') }}">
-                <div class="sidebar-brand-icon rotate-n-15">
-                    <i class="fas fa-laugh-wink"></i>
+                <div class="sidebar-brand-icon">
+                    <img src="/images/logo-sdn1karanganyar.png" alt="Logo Sekolah" class="img-fluid" style="max-width: 40px;">
+
                 </div>
-                <div class="sidebar-brand-text mx-3">Absensi IoT <span class="badge badge-light text-uppercase ml-1">{{ str_replace('_',' ', auth()->user()->role ?? 'guest') }}</span></div>
+                <div class="sidebar-brand-text mx-3">Absensi Siswa <span class="badge badge-light text-uppercase ml-1">{{ str_replace('_',' ', auth()->user()->role ?? 'guest') }}</span></div>
             </a>
 
             <!-- Divider -->
@@ -52,7 +53,7 @@
                 Master Data
             </div>
 
-            @if(auth()->check() && in_array(auth()->user()->role, ['admin','kepala_sekolah']))
+            @if(auth()->check() && in_array(auth()->user()->role, ['admin']))
                 <li class="nav-item {{ request()->routeIs('kelas.*') ? 'active' : '' }}">
                     <a class="nav-link" href="{{ route('kelas.index') }}">
                         <i class="fas fa-fw fa-school"></i>
