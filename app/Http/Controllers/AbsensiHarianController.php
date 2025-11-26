@@ -9,17 +9,34 @@ use Illuminate\Http\Request;
 
 class AbsensiHarianController extends Controller
 {
-    private function title(): string { return 'Absensi Harian'; }
-    private function routePrefix(): string { return 'absensi-harian'; }
+    private function title(): string
+    {
+        return 'Absensi Harian';
+    }
+    private function routePrefix(): string
+    {
+        return 'absensi-harian';
+    }
 
     private function fields(): array
     {
         return [
             'siswa_id' => ['label' => 'Siswa', 'type' => 'select', 'options' => 'siswa_list', 'rules' => 'required|exists:siswa,id'],
-            'perangkat_id' => ['label' => 'Perangkat', 'type' => 'select', 'options' => 'perangkat_list', 'rules' => 'required|exists:perangkat,id'],
+            'perangkat_masuk_id' => ['label' => 'Perangkat Masuk', 'type' => 'select', 'options' => 'perangkat_list', 'rules' => 'required|exists:perangkat,id'],
+            'perangkat_pulang_id' => ['label' => 'Perangkat Pulang', 'type' => 'select', 'options' => 'perangkat_list', 'rules' => 'nullable|exists:perangkat,id'],
             'waktu_masuk' => ['label' => 'Waktu Masuk', 'type' => 'datetime-local', 'rules' => 'nullable|date'],
-            'waktu_pulang' => ['label' => 'Waktu Pulang', 'type' => 'datetime-local', 'rules' => 'nullable|date|after_or_equal:waktu_masuk'],
-            'keterangan' => ['label' => 'Keterangan', 'type' => 'text', 'rules' => 'nullable|string|max:255'],
+            'waktu_pulang' => [
+                'label' => 'Waktu Pulang',
+                'type' => 'datetime-local',
+                'rules' => 'nullable|date'
+            ],
+
+            'status_kehadiran' => [
+                'label' => 'Status Kehadiran',
+                'type' => 'select',
+                'options' => 'status_list',
+                'rules' => 'required|in:Hadir,Izin,Sakit,Alpha,Terlambat'
+            ]
         ];
     }
 
@@ -31,11 +48,21 @@ class AbsensiHarianController extends Controller
     private function options(string $key): array
     {
         return match ($key) {
-            'siswa_list' => Siswa::orderBy('nama_siswa')->get(['id','nama_siswa'])->map(fn($s)=>['value'=>$s->id,'label'=>$s->nama_siswa])->toArray(),
-            'perangkat_list' => Perangkat::orderBy('nama_perangkat')->get(['id','nama_perangkat'])->map(fn($p)=>['value'=>$p->id,'label'=>$p->nama_perangkat])->toArray(),
+            'siswa_list' => Siswa::orderBy('nama_siswa')->get(['id', 'nama_siswa'])->map(fn($s) => ['value' => $s->id, 'label' => $s->nama_siswa])->toArray(),
+            'perangkat_list' => Perangkat::orderBy('nama_perangkat')->get(['id', 'nama_perangkat'])->map(fn($p) => ['value' => $p->id, 'label' => $p->nama_perangkat])->toArray(),
+            'status_list' => [
+                ['value' => 'Hadir', 'label' => 'Hadir'],
+                ['value' => 'Izin', 'label' => 'Izin'],
+                ['value' => 'Sakit', 'label' => 'Sakit'],
+                ['value' => 'Alpha', 'label' => 'Alpa'],
+                ['value' => 'Terlambat', 'label' => 'Terlambat'],
+            ],
+
             default => [],
         };
     }
+
+
 
     private function buildFields(array $fields, $item = null): array
     {
@@ -58,10 +85,18 @@ class AbsensiHarianController extends Controller
         return $out;
     }
 
+    private function convertDateTime($val)
+    {
+        if (!$val)
+            return null;
+        return str_replace('T', ' ', $val) . ':00';
+    }
+
+
     public function index()
     {
-        $items = AbsensiHarian::with(['siswa','perangkat'])->latest()->paginate(10);
-        $rows = $items->getCollection()->map(function($item){
+        $items = AbsensiHarian::with(['siswa', 'perangkat'])->latest()->paginate(10);
+        $rows = $items->getCollection()->map(function ($item) {
             $masuk = $item->waktu_masuk ? \Carbon\Carbon::parse($item->waktu_masuk)->format('d-m-Y H:i') : '-';
             $pulang = $item->waktu_pulang ? \Carbon\Carbon::parse($item->waktu_pulang)->format('d-m-Y H:i') : '-';
             return [
@@ -101,15 +136,35 @@ class AbsensiHarianController extends Controller
 
     public function store(Request $request)
     {
-        $rules = collect($this->fields())->mapWithKeys(fn($v,$k)=>[$k=>$v['rules']??''])->filter()->toArray();
+        $rules = collect($this->fields())
+            ->mapWithKeys(fn($v, $k) => [$k => $v['rules'] ?? ''])
+            ->filter()
+            ->toArray();
+
         $data = $request->validate($rules);
+
         $model = new AbsensiHarian();
+
         foreach ($this->fields() as $name => $_) {
-            $model->{$name} = $data[$name] ?? null;
+
+            if (in_array($name, ['waktu_masuk', 'waktu_pulang'])) {
+                $model->{$name} = $this->convertDateTime($data[$name] ?? null);
+            } else {
+                $model->{$name} = $data[$name] ?? null;
+            }
         }
+
+        // Jika tanggal kosong → ambil dari waktu_masuk
+        if (!$model->tanggal && $model->waktu_masuk) {
+            $model->tanggal = substr($model->waktu_masuk, 0, 10);
+        }
+
         $model->save();
-        return redirect()->route($this->routePrefix().'.index')->with('success', $this->title().' berhasil ditambahkan');
+
+        return redirect()->route($this->routePrefix() . '.index')
+            ->with('success', $this->title() . ' berhasil ditambahkan');
     }
+
 
     public function show(AbsensiHarian $absensi_harian)
     {
@@ -138,18 +193,38 @@ class AbsensiHarianController extends Controller
 
     public function update(Request $request, AbsensiHarian $absensi_harian)
     {
-        $rules = collect($this->fields())->mapWithKeys(fn($v,$k)=>[$k=>$v['rules']??''])->filter()->toArray();
+        $rules = collect($this->fields())
+            ->mapWithKeys(fn($v, $k) => [$k => $v['rules'] ?? ''])
+            ->filter()
+            ->toArray();
+
         $data = $request->validate($rules);
+
         foreach ($this->fields() as $name => $_) {
-            $absensi_harian->{$name} = $data[$name] ?? null;
+
+            if (in_array($name, ['waktu_masuk', 'waktu_pulang'])) {
+                $absensi_harian->{$name} = $this->convertDateTime($data[$name] ?? null);
+            } else {
+                $absensi_harian->{$name} = $data[$name] ?? null;
+            }
         }
+
+        // Auto set tanggal
+        if (!$absensi_harian->tanggal && $absensi_harian->waktu_masuk) {
+            $absensi_harian->tanggal = substr($absensi_harian->waktu_masuk, 0, 10);
+        }
+
         $absensi_harian->save();
-        return redirect()->route($this->routePrefix().'.index')->with('success', $this->title().' berhasil diperbarui');
+
+        return redirect()->route($this->routePrefix() . '.index')
+            ->with('success', $this->title() . ' berhasil diperbarui');
     }
+
 
     public function destroy(AbsensiHarian $absensi_harian)
     {
         $absensi_harian->delete();
-        return redirect()->route($this->routePrefix().'.index')->with('success', $this->title().' berhasil dihapus');
+        return redirect()->route($this->routePrefix() . '.index')->with('success', $this->title() . ' berhasil dihapus');
     }
 }
+
