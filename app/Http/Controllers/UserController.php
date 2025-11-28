@@ -122,6 +122,8 @@ class UserController extends Controller
         $user = new User();
         $user->nama_lengkap = $data['nama_lengkap'];
         $user->email = $data['email'];
+        // Generate username from email (before @ symbol)
+        $user->username = explode('@', $data['email'])[0];
         // cast 'hashed' pada model akan meng-hash otomatis
         $user->password_hash = $data['password'];
         $user->role = $data['role'];
@@ -174,6 +176,10 @@ class UserController extends Controller
 
         $user->nama_lengkap = $data['nama_lengkap'];
         $user->email = $data['email'];
+        // Update username if email changed
+        if ($user->email !== $data['email']) {
+            $user->username = explode('@', $data['email'])[0];
+        }
         if (!empty($data['password'])) {
             $user->password_hash = $data['password'];
         }

@@ -46,6 +46,7 @@ class UserImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFail
         return new User([
             'nama_lengkap' => $row['nama_lengkap'],
             'email' => $row['email'],
+            'username' => explode('@', $row['email'])[0], // Generate username from email
             'password_hash' => Hash::make($row['password']), // Hash password
             'role' => $role,
             'no_telepon' => $row['no_telepon'] ?? null,
