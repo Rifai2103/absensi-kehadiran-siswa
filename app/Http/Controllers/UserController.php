@@ -6,6 +6,10 @@ use App\Models\User;
 use App\Models\Kelas;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Exports\UserTemplateExport;
+use App\Exports\UserExport;
+use App\Imports\UserImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class UserController extends Controller
 {
@@ -190,5 +194,65 @@ class UserController extends Controller
 
         $user->delete();
         return redirect()->route($this->routePrefix().'.index')->with('success', $this->title().' berhasil dihapus');
+    }
+
+    /**
+     * Download template Excel untuk import pengguna
+     */
+    public function downloadTemplate()
+    {
+        return Excel::download(new UserTemplateExport, 'template_import_pengguna.xlsx');
+    }
+
+    /**
+     * Import pengguna dari file Excel
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls|max:2048'
+        ], [
+            'file.required' => 'File Excel wajib dipilih',
+            'file.mimes' => 'File harus berformat Excel (.xlsx atau .xls)',
+            'file.max' => 'Ukuran file maksimal 2MB'
+        ]);
+
+        try {
+            $import = new UserImport();
+            Excel::import($import, $request->file('file'));
+
+            $imported = $import->getImportedCount();
+            $skipped = $import->getSkippedCount();
+            $failures = $import->failures();
+
+            $message = "Import selesai! {$imported} pengguna berhasil diimport.";
+
+            if ($skipped > 0) {
+                $message .= " {$skipped} data dilewati (duplikat atau role tidak valid).";
+            }
+
+            if ($failures->count() > 0) {
+                $errorMessages = [];
+                foreach ($failures as $failure) {
+                    $errorMessages[] = "Baris {$failure->row()}: " . implode(', ', $failure->errors());
+                }
+                return redirect()->route($this->routePrefix().'.index')
+                    ->with('warning', $message . ' Namun ada ' . $failures->count() . ' baris dengan error.')
+                    ->with('errors', $errorMessages);
+            }
+
+            return redirect()->route($this->routePrefix().'.index')->with('success', $message);
+        } catch (\Exception $e) {
+            return redirect()->route($this->routePrefix().'.index')
+                ->with('error', 'Terjadi kesalahan saat import: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Export semua data pengguna ke Excel
+     */
+    public function export()
+    {
+        return Excel::download(new UserExport, 'data_pengguna_' . date('Y-m-d') . '.xlsx');
     }
 }

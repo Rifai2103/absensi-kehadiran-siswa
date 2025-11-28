@@ -14,6 +14,16 @@
                 <a href="{{ route('siswa.export') }}" class="btn btn-sm btn-secondary shadow-sm">
                     <i class="fas fa-file-excel fa-sm text-white-50"></i> Export Data
                 </a>
+            @elseif($routePrefix === 'users')
+                <button type="button" class="btn btn-sm btn-success shadow-sm mr-2" data-toggle="modal" data-target="#importModal">
+                    <i class="fas fa-file-upload fa-sm text-white-50"></i> Import Excel
+                </button>
+                <a href="{{ route('users.template') }}" class="btn btn-sm btn-info shadow-sm mr-2">
+                    <i class="fas fa-download fa-sm text-white-50"></i> Download Template
+                </a>
+                <a href="{{ route('users.export') }}" class="btn btn-sm btn-secondary shadow-sm">
+                    <i class="fas fa-file-excel fa-sm text-white-50"></i> Export Data
+                </a>
             @endif
         </div>
         <a href="{{ route($routePrefix . '.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
@@ -110,15 +120,17 @@
         </div>
     </div>
 
-    <!-- Modal Import Excel (untuk siswa) -->
-    @if($routePrefix === 'siswa')
+    <!-- Modal Import Excel (untuk siswa dan users) -->
+    @if($routePrefix === 'siswa' || $routePrefix === 'users')
     <div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
-                <form action="{{ route('siswa.import') }}" method="POST" enctype="multipart/form-data" id="importForm">
+                <form action="{{ route($routePrefix . '.import') }}" method="POST" enctype="multipart/form-data" id="importForm">
                     @csrf
                     <div class="modal-header">
-                        <h5 class="modal-title" id="importModalLabel">Import Data Siswa dari Excel</h5>
+                        <h5 class="modal-title" id="importModalLabel">
+                            Import Data {{ $routePrefix === 'siswa' ? 'Siswa' : 'Pengguna' }} dari Excel
+                        </h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -129,8 +141,14 @@
                             <strong>Petunjuk:</strong>
                             <ol class="mb-0 mt-2">
                                 <li>Download template Excel terlebih dahulu</li>
-                                <li>Isi data siswa sesuai format template</li>
-                                <li>Pastikan nama kelas sudah ada di sistem</li>
+                                @if($routePrefix === 'siswa')
+                                    <li>Isi data siswa sesuai format template</li>
+                                    <li>Pastikan nama kelas sudah ada di sistem</li>
+                                @else
+                                    <li>Isi data pengguna sesuai format template</li>
+                                    <li>Peran harus: admin, guru, atau kepala_sekolah</li>
+                                    <li>Password akan di-hash otomatis</li>
+                                @endif
                                 <li>Upload file Excel yang sudah diisi</li>
                             </ol>
                         </div>

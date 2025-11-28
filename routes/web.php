@@ -59,6 +59,11 @@ Route::middleware(['auth', 'role:admin,guru,kepala_sekolah'])->group(function ()
         Route::resource('siswa', SiswaController::class)->names('siswa');
 
         Route::resource('perangkat', PerangkatController::class)->names('perangkat');
+
+        // Users Import/Export routes (harus sebelum resource)
+        Route::get('users/template', [UserController::class, 'downloadTemplate'])->name('users.template');
+        Route::post('users/import', [UserController::class, 'import'])->name('users.import');
+        Route::get('users/export', [UserController::class, 'export'])->name('users.export');
         Route::resource('users', UserController::class)->names('users');
     });
 
