@@ -47,8 +47,17 @@ class AbsensiHarianController extends Controller
 
     private function options(string $key): array
     {
+        $user = auth()->user();
+        
         return match ($key) {
-            'siswa_list' => Siswa::orderBy('nama_siswa')->get(['id', 'nama_siswa'])->map(fn($s) => ['value' => $s->id, 'label' => $s->nama_siswa])->toArray(),
+            'siswa_list' => Siswa::with(['kelas'])
+                ->whereHas('kelas', function($query) use ($user) {
+                    $query->where('guru', $user->id);
+                })
+                ->orderBy('nama_siswa')
+                ->get(['id', 'nama_siswa'])
+                ->map(fn($s) => ['value' => $s->id, 'label' => $s->nama_siswa])
+                ->toArray(),
             'perangkat_list' => Perangkat::orderBy('nama_perangkat')->get(['id', 'nama_perangkat'])->map(fn($p) => ['value' => $p->id, 'label' => $p->nama_perangkat])->toArray(),
             'status_list' => [
                 ['value' => 'hadir', 'label' => 'Hadir'],
@@ -95,7 +104,16 @@ class AbsensiHarianController extends Controller
 
     public function index()
     {
-        $items = AbsensiHarian::with(['siswa', 'perangkat'])->latest()->paginate(10);
+        $user = auth()->user();
+        
+        // Get attendance records for students where the logged-in teacher is wali kelas
+        $items = AbsensiHarian::with(['siswa.kelas', 'perangkat'])
+            ->whereHas('siswa.kelas', function($query) use ($user) {
+                $query->where('guru', $user->id);
+            })
+            ->latest()
+            ->paginate(10);
+            
         $rows = $items->getCollection()->map(function ($item) {
             $masuk = $item->waktu_masuk ? \Carbon\Carbon::parse($item->waktu_masuk)->format('d-m-Y H:i') : '-';
             $pulang = $item->waktu_pulang ? \Carbon\Carbon::parse($item->waktu_pulang)->format('d-m-Y H:i') : '-';
@@ -103,6 +121,7 @@ class AbsensiHarianController extends Controller
                 'id' => $item->id,
                 'cols' => [
                     $item->siswa->nama_siswa ?? '-',
+                    $item->siswa->kelas->nama_kelas ?? '-',
                     $item->perangkat->nama_perangkat ?? '-',
                     $masuk,
                     $pulang,
@@ -114,7 +133,7 @@ class AbsensiHarianController extends Controller
             'title' => 'Kelola ' . $this->title(),
             'page_title' => 'Kelola ' . $this->title(),
             'routePrefix' => $this->routePrefix(),
-            'headers' => $this->columns(),
+            'headers' => ['Siswa', 'Kelas', 'Perangkat', 'Masuk', 'Pulang'],
             'items' => $items,
             'rows' => $rows,
         ]);
@@ -168,6 +187,19 @@ class AbsensiHarianController extends Controller
 
     public function show(AbsensiHarian $absensi_harian)
     {
+        $user = auth()->user();
+        
+        // Check if the attendance record belongs to a student under the teacher's supervision
+        if ($user->role === 'guru') {
+            $isTeacherStudent = $absensi_harian->siswa && 
+                              $absensi_harian->siswa->kelas && 
+                              $absensi_harian->siswa->kelas->guru === $user->id;
+            
+            if (!$isTeacherStudent) {
+                abort(403, 'Anda tidak memiliki akses ke data absensi ini.');
+            }
+        }
+        
         return view('crud.show', [
             'title' => 'Detail ' . $this->title(),
             'page_title' => 'Detail ' . $this->title(),
@@ -179,6 +211,19 @@ class AbsensiHarianController extends Controller
 
     public function edit(AbsensiHarian $absensi_harian)
     {
+        $user = auth()->user();
+        
+        // Check if the attendance record belongs to a student under the teacher's supervision
+        if ($user->role === 'guru') {
+            $isTeacherStudent = $absensi_harian->siswa && 
+                              $absensi_harian->siswa->kelas && 
+                              $absensi_harian->siswa->kelas->guru === $user->id;
+            
+            if (!$isTeacherStudent) {
+                abort(403, 'Anda tidak memiliki akses ke data absensi ini.');
+            }
+        }
+        
         $fields = $this->buildFields($this->fields(), $absensi_harian);
         return view('crud.form', [
             'title' => 'Ubah ' . $this->title(),
@@ -223,6 +268,19 @@ class AbsensiHarianController extends Controller
 
     public function destroy(AbsensiHarian $absensi_harian)
     {
+        $user = auth()->user();
+        
+        // Check if the attendance record belongs to a student under the teacher's supervision
+        if ($user->role === 'guru') {
+            $isTeacherStudent = $absensi_harian->siswa && 
+                              $absensi_harian->siswa->kelas && 
+                              $absensi_harian->siswa->kelas->guru === $user->id;
+            
+            if (!$isTeacherStudent) {
+                abort(403, 'Anda tidak memiliki akses ke data absensi ini.');
+            }
+        }
+        
         $absensi_harian->delete();
         return redirect()->route($this->routePrefix() . '.index')->with('success', $this->title() . ' berhasil dihapus');
     }

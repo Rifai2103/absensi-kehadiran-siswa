@@ -134,11 +134,77 @@ class DashboardController extends Controller
                     $q->select('id')->from('siswa')->whereIn('kelas_id', $kelasIds);
                 })->count();
 
+            // Get attendance data for the last 7 days for teacher's students only
+            $attendanceData = DB::table('absensi_harian')
+                ->select(
+                    'tanggal',
+                    'status_kehadiran',
+                    DB::raw('COUNT(*) as count')
+                )
+                ->whereDate('tanggal', '>=', Carbon::now()->subDays(6))
+                ->whereIn('siswa_id', function ($q) use ($kelasIds) {
+                    $q->select('id')->from('siswa')->whereIn('kelas_id', $kelasIds);
+                })
+                ->groupBy('tanggal', 'status_kehadiran')
+                ->orderBy('tanggal')
+                ->get();
+
+            // Prepare data for Chart.js
+            $dates = [];
+            $hadirData = [];
+            $izinData = [];
+            $sakitData = [];
+            $alpaData = [];
+            $terlambatData = [];
+
+            // Initialize arrays for last 7 days
+            for ($i = 6; $i >= 0; $i--) {
+                $date = Carbon::now()->subDays($i)->format('Y-m-d');
+                $dates[] = Carbon::now()->subDays($i)->format('d/m');
+                $hadirData[$date] = 0;
+                $izinData[$date] = 0;
+                $sakitData[$date] = 0;
+                $alpaData[$date] = 0;
+                $terlambatData[$date] = 0;
+            }
+
+            // Fill data from database
+            foreach ($attendanceData as $record) {
+                $date = $record->tanggal;
+                if (isset($hadirData[$date])) {
+                    switch ($record->status_kehadiran) {
+                        case 'hadir':
+                            $hadirData[$date] = $record->count;
+                            break;
+                        case 'izin':
+                            $izinData[$date] = $record->count;
+                            break;
+                        case 'sakit':
+                            $sakitData[$date] = $record->count;
+                            break;
+                        case 'alpa':
+                            $alpaData[$date] = $record->count;
+                            break;
+                        case 'terlambat':
+                            $terlambatData[$date] = $record->count;
+                            break;
+                    }
+                }
+            }
+
             $data = [
                 'title' => 'Dashboard Guru',
                 'totalSiswaWali' => $siswaCount,
                 'totalKelasDiwalikan' => count($kelasIds),
                 'totalAbsensiTodayWali' => $absensiToday,
+                'attendanceChart' => [
+                    'dates' => $dates,
+                    'hadir' => array_values($hadirData),
+                    'izin' => array_values($izinData),
+                    'sakit' => array_values($sakitData),
+                    'alpa' => array_values($alpaData),
+                    'terlambat' => array_values($terlambatData),
+                ],
             ];
         } catch (QueryException $e) {
             $data = [
@@ -146,6 +212,14 @@ class DashboardController extends Controller
                 'totalSiswaWali' => 0,
                 'totalKelasDiwalikan' => 0,
                 'totalAbsensiTodayWali' => 0,
+                'attendanceChart' => [
+                    'dates' => [],
+                    'hadir' => [],
+                    'izin' => [],
+                    'sakit' => [],
+                    'alpa' => [],
+                    'terlambat' => [],
+                ],
             ];
         }
         return view('dashboard.guru', $data);
