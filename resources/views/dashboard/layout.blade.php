@@ -95,7 +95,7 @@
                         <span>Absensi Harian</span>
                     </a>
                 </li>
-                <li class="nav-item {{ request()->routeIs('rekap.*') ? 'active' : '' }}">
+                <li class="nav-item {{ request()->routeIs('rekap.index') ? 'active' : '' }}">
                     <a class="nav-link" href="{{ route('rekap.index') }}">
                         <i class="fas fa-fw fa-chart-line"></i>
                         <span>Rekap Absensi</span>
@@ -104,6 +104,14 @@
                         @endif
                     </a>
                 </li>
+                @if(auth()->check() && in_array(auth()->user()->role, ['admin', 'guru', 'kepala_sekolah']))
+                    <li class="nav-item {{ request()->routeIs('rekap.semester*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('rekap.semester') }}">
+                            <i class="fas fa-fw fa-calendar-alt"></i>
+                            <span>Rekap Semester</span>
+                        </a>
+                    </li>
+                @endif
             @endif
 
             @if(auth()->check() && auth()->user()->role === 'guru')

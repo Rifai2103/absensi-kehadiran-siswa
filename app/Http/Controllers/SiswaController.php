@@ -6,6 +6,10 @@ use App\Models\Siswa;
 use App\Models\Kelas;
 use App\Models\AbsensiHarian;
 use Illuminate\Http\Request;
+use App\Exports\SiswaTemplateExport;
+use App\Exports\SiswaExport;
+use App\Imports\SiswaImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SiswaController extends Controller
 {
@@ -16,6 +20,8 @@ class SiswaController extends Controller
     {
         return [
             'nama_siswa' => ['label' => 'Nama Siswa', 'type' => 'text', 'rules' => 'required|string|max:255'],
+            'nis' => ['label' => 'NIS (Nomor Induk Siswa)', 'type' => 'text', 'rules' => 'nullable|string|max:20|unique:siswa,nis'],
+            'nisn' => ['label' => 'NISN (Nomor Induk Siswa Nasional)', 'type' => 'text', 'rules' => 'nullable|string|size:10|unique:siswa,nisn'],
             'jenis_kelamin' => ['label' => 'Jenis Kelamin', 'type' => 'select', 'options' => 'jk', 'rules' => 'required|in:L,P'],
             'template_sidik_jari' => ['label' => 'Template Sidik Jari', 'type' => 'textarea', 'rules' => 'nullable|string'],
             'finger_id' => ['label' => 'Finger ID (dari sensor)', 'type' => 'text', 'rules' => 'nullable|integer|unique:siswa,finger_id'],
@@ -27,7 +33,7 @@ class SiswaController extends Controller
 
     private function columns(): array
     {
-        return ['Nama Siswa', 'JK', 'Kelas', 'Finger ID'];
+        return ['Nama Siswa', 'NIS', 'NISN', 'JK', 'Kelas', 'Finger ID'];
     }
 
     private function options(string $key): array
@@ -83,6 +89,8 @@ class SiswaController extends Controller
                 'id' => $item->id,
                 'cols' => [
                     $item->nama_siswa,
+                    $item->nis ?? '-',
+                    $item->nisn ?? '-',
                     $item->jenis_kelamin,
                     optional($item->kelas)->nama_kelas ?? '-',
                     $item->finger_id ?? '-',
@@ -154,7 +162,13 @@ class SiswaController extends Controller
     public function update(Request $request, Siswa $siswa)
     {
         $rules = collect($this->fields())->mapWithKeys(fn($v,$k)=>[$k=>$v['rules']??''])->filter()->toArray();
-        // Sesuaikan unik finger_id untuk mengabaikan ID saat update
+        // Sesuaikan unik untuk mengabaikan ID saat update
+        if (isset($rules['nis'])) {
+            $rules['nis'] = 'nullable|string|max:20|unique:siswa,nis,' . $siswa->id;
+        }
+        if (isset($rules['nisn'])) {
+            $rules['nisn'] = 'nullable|string|size:10|unique:siswa,nisn,' . $siswa->id;
+        }
         if (isset($rules['finger_id'])) {
             $rules['finger_id'] = 'nullable|integer|unique:siswa,finger_id,' . $siswa->id;
         }
@@ -176,5 +190,65 @@ class SiswaController extends Controller
 
         $siswa->delete();
         return redirect()->route($this->routePrefix().'.index')->with('success', $this->title().' berhasil dihapus');
+    }
+
+    /**
+     * Download template Excel untuk import siswa
+     */
+    public function downloadTemplate()
+    {
+        return Excel::download(new SiswaTemplateExport, 'template_import_siswa.xlsx');
+    }
+
+    /**
+     * Import siswa dari file Excel
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls|max:2048'
+        ], [
+            'file.required' => 'File Excel wajib dipilih',
+            'file.mimes' => 'File harus berformat Excel (.xlsx atau .xls)',
+            'file.max' => 'Ukuran file maksimal 2MB'
+        ]);
+
+        try {
+            $import = new SiswaImport();
+            Excel::import($import, $request->file('file'));
+
+            $imported = $import->getImportedCount();
+            $skipped = $import->getSkippedCount();
+            $failures = $import->failures();
+
+            $message = "Import selesai! {$imported} siswa berhasil diimport.";
+
+            if ($skipped > 0) {
+                $message .= " {$skipped} data dilewati (duplikat atau kelas tidak ditemukan).";
+            }
+
+            if ($failures->count() > 0) {
+                $errorMessages = [];
+                foreach ($failures as $failure) {
+                    $errorMessages[] = "Baris {$failure->row()}: " . implode(', ', $failure->errors());
+                }
+                return redirect()->route($this->routePrefix().'.index')
+                    ->with('warning', $message . ' Namun ada ' . $failures->count() . ' baris dengan error.')
+                    ->with('errors', $errorMessages);
+            }
+
+            return redirect()->route($this->routePrefix().'.index')->with('success', $message);
+        } catch (\Exception $e) {
+            return redirect()->route($this->routePrefix().'.index')
+                ->with('error', 'Terjadi kesalahan saat import: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Export semua data siswa ke Excel
+     */
+    public function export()
+    {
+        return Excel::download(new SiswaExport, 'data_siswa_' . date('Y-m-d') . '.xlsx');
     }
 }
