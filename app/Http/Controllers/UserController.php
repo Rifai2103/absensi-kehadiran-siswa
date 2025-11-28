@@ -16,7 +16,7 @@ class UserController extends Controller
     {
         return [
             'nama_lengkap' => ['label' => 'Nama Lengkap', 'type' => 'text'],
-            'username' => ['label' => 'Username', 'type' => 'text'],
+            'email' => ['label' => 'Email', 'type' => 'email'],
             'password' => ['label' => 'Password', 'type' => 'password'],
             'role' => ['label' => 'Peran', 'type' => 'select', 'options' => 'roles'],
             'no_telepon' => ['label' => 'No. Telepon', 'type' => 'text'],
@@ -25,7 +25,7 @@ class UserController extends Controller
 
     private function columns(): array
     {
-        return ['Nama Lengkap', 'Username', 'Peran', 'No. Telepon'];
+        return ['Nama Lengkap', 'Email', 'Peran', 'No. Telepon'];
     }
 
     private function options(string $key): array
@@ -73,7 +73,7 @@ class UserController extends Controller
                 'name' => $item->nama_lengkap,
                 'cols' => [
                     $item->nama_lengkap,
-                    $item->username,
+                    $item->email ?? '-',
                     ucfirst(str_replace('_',' ', $item->role)),
                     $item->no_telepon ?? '-',
                 ],
@@ -109,7 +109,7 @@ class UserController extends Controller
     {
         $data = $request->validate([
             'nama_lengkap' => ['required','string','max:255'],
-            'username' => ['required','string','max:100','unique:users,username'],
+            'email' => ['required','email','max:255','unique:users,email'],
             'password' => ['required','string','min:6'],
             'role' => ['required', Rule::in(['admin','guru','kepala_sekolah'])],
             'no_telepon' => ['nullable','string','max:20'],
@@ -117,7 +117,7 @@ class UserController extends Controller
 
         $user = new User();
         $user->nama_lengkap = $data['nama_lengkap'];
-        $user->username = $data['username'];
+        $user->email = $data['email'];
         // cast 'hashed' pada model akan meng-hash otomatis
         $user->password_hash = $data['password'];
         $user->role = $data['role'];
@@ -162,14 +162,14 @@ class UserController extends Controller
     {
         $data = $request->validate([
             'nama_lengkap' => ['required','string','max:255'],
-            'username' => ['required','string','max:100', Rule::unique('users','username')->ignore($user->id)],
+            'email' => ['required','email','max:255', Rule::unique('users','email')->ignore($user->id)],
             'password' => ['nullable','string','min:6'],
             'role' => ['required', Rule::in(['admin','guru','kepala_sekolah'])],
             'no_telepon' => ['nullable','string','max:20'],
         ]);
 
         $user->nama_lengkap = $data['nama_lengkap'];
-        $user->username = $data['username'];
+        $user->email = $data['email'];
         if (!empty($data['password'])) {
             $user->password_hash = $data['password'];
         }
