@@ -35,7 +35,7 @@ class AbsensiHarianController extends Controller
                 'label' => 'Status Kehadiran',
                 'type' => 'select',
                 'options' => 'status_list',
-                'rules' => 'required|in:Hadir,Izin,Sakit,Alpha,Terlambat'
+                'rules' => 'required|in:hadir,izin,sakit,alpa,terlambat'
             ]
         ];
     }
@@ -51,11 +51,11 @@ class AbsensiHarianController extends Controller
             'siswa_list' => Siswa::orderBy('nama_siswa')->get(['id', 'nama_siswa'])->map(fn($s) => ['value' => $s->id, 'label' => $s->nama_siswa])->toArray(),
             'perangkat_list' => Perangkat::orderBy('nama_perangkat')->get(['id', 'nama_perangkat'])->map(fn($p) => ['value' => $p->id, 'label' => $p->nama_perangkat])->toArray(),
             'status_list' => [
-                ['value' => 'Hadir', 'label' => 'Hadir'],
-                ['value' => 'Izin', 'label' => 'Izin'],
-                ['value' => 'Sakit', 'label' => 'Sakit'],
-                ['value' => 'Alpha', 'label' => 'Alpa'],
-                ['value' => 'Terlambat', 'label' => 'Terlambat'],
+                ['value' => 'hadir', 'label' => 'Hadir'],
+                ['value' => 'izin', 'label' => 'Izin'],
+                ['value' => 'sakit', 'label' => 'Sakit'],
+                ['value' => 'alpa', 'label' => 'Alpa'],
+                ['value' => 'terlambat', 'label' => 'Terlambat'],
             ],
 
             default => [],
