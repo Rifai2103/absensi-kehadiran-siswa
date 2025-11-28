@@ -28,6 +28,7 @@ class RekapSemesterController extends Controller
         $semester = $request->input('semester', $defaultSemester);
         $tahun = $request->input('tahun', $defaultTahun);
         $kelasId = $request->input('kelas_id');
+        $user = auth()->user();
 
         // Tentukan range tanggal berdasarkan semester
         if ($semester == 1) {
@@ -62,6 +63,12 @@ class RekapSemesterController extends Controller
             )
             ->groupBy('s.id', 's.nama_siswa', 's.nis', 's.nisn', 'k.nama_kelas');
 
+        // Role-based filtering
+        if ($user->role === 'guru') {
+            // Teachers can only see students from their supervised classes
+            $query->where('k.guru', $user->id);
+        }
+
         // Filter by kelas if selected
         if ($kelasId) {
             $query->where('s.kelas_id', $kelasId);
@@ -82,8 +89,14 @@ class RekapSemesterController extends Controller
             return $item;
         });
 
-        // Get all kelas for filter
-        $kelasList = Kelas::orderBy('nama_kelas')->get();
+        // Get kelas list for filter (role-based)
+        if ($user->role === 'guru') {
+            // Teachers only see their supervised classes
+            $kelasList = Kelas::where('guru', $user->id)->orderBy('nama_kelas')->get();
+        } else {
+            // Admin and kepala sekolah see all classes
+            $kelasList = Kelas::orderBy('nama_kelas')->get();
+        }
 
         return view('rekap.semester', [
             'title' => 'Rekap Semester',
@@ -125,6 +138,7 @@ class RekapSemesterController extends Controller
         $semester = $request->input('semester', 1);
         $tahun = $request->input('tahun', now()->year);
         $kelasId = $request->input('kelas_id');
+        $user = auth()->user();
 
         // Tentukan range tanggal
         if ($semester == 1) {
@@ -156,6 +170,12 @@ class RekapSemesterController extends Controller
                 DB::raw("COUNT(a.id) as total_kehadiran")
             )
             ->groupBy('s.id', 's.nama_siswa', 's.nis', 's.nisn', 'k.nama_kelas');
+
+        // Role-based filtering
+        if ($user->role === 'guru') {
+            // Teachers can only export students from their supervised classes
+            $query->where('k.guru', $user->id);
+        }
 
         if ($kelasId) {
             $query->where('s.kelas_id', $kelasId);

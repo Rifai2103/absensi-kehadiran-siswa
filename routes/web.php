@@ -79,8 +79,8 @@ Route::middleware(['auth', 'role:admin,guru,kepala_sekolah'])->group(function ()
         Route::get('/rekap-kelas/{kelas}/detail', [\App\Http\Controllers\RekapKelasController::class, 'detail'])->name('rekap.kelas.detail');
     });
 
-    // Rekap Semester dapat diakses Admin dan Kepala Sekolah
-    Route::middleware(['role:admin,kepala_sekolah'])->group(function () {
+    // Rekap Semester dapat diakses Admin, Guru, dan Kepala Sekolah
+    Route::middleware(['role:admin,guru,kepala_sekolah'])->group(function () {
         Route::get('/rekap-semester', [\App\Http\Controllers\RekapSemesterController::class, 'index'])->name('rekap.semester');
         Route::get('/rekap-semester/export', [\App\Http\Controllers\RekapSemesterController::class, 'export'])->name('rekap.semester.export');
     });

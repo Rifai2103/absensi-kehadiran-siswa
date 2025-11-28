@@ -104,7 +104,7 @@
                         @endif
                     </a>
                 </li>
-                @if(auth()->check() && in_array(auth()->user()->role, ['admin', 'kepala_sekolah']))
+                @if(auth()->check() && in_array(auth()->user()->role, ['admin', 'guru', 'kepala_sekolah']))
                     <li class="nav-item {{ request()->routeIs('rekap.semester*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('rekap.semester') }}">
                             <i class="fas fa-fw fa-calendar-alt"></i>
