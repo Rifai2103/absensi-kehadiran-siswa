@@ -51,7 +51,13 @@ Route::middleware(['auth', 'role:admin,guru,kepala_sekolah'])->group(function ()
         Route::resource('kelas', KelasController::class)
             ->parameters(['kelas' => 'kelas'])
             ->names('kelas');
+
+        // Siswa Import/Export routes (harus sebelum resource)
+        Route::get('siswa/template', [SiswaController::class, 'downloadTemplate'])->name('siswa.template');
+        Route::post('siswa/import', [SiswaController::class, 'import'])->name('siswa.import');
+        Route::get('siswa/export', [SiswaController::class, 'export'])->name('siswa.export');
         Route::resource('siswa', SiswaController::class)->names('siswa');
+
         Route::resource('perangkat', PerangkatController::class)->names('perangkat');
         Route::resource('users', UserController::class)->names('users');
     });

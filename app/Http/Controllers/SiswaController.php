@@ -6,6 +6,10 @@ use App\Models\Siswa;
 use App\Models\Kelas;
 use App\Models\AbsensiHarian;
 use Illuminate\Http\Request;
+use App\Exports\SiswaTemplateExport;
+use App\Exports\SiswaExport;
+use App\Imports\SiswaImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SiswaController extends Controller
 {
@@ -186,5 +190,65 @@ class SiswaController extends Controller
 
         $siswa->delete();
         return redirect()->route($this->routePrefix().'.index')->with('success', $this->title().' berhasil dihapus');
+    }
+
+    /**
+     * Download template Excel untuk import siswa
+     */
+    public function downloadTemplate()
+    {
+        return Excel::download(new SiswaTemplateExport, 'template_import_siswa.xlsx');
+    }
+
+    /**
+     * Import siswa dari file Excel
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls|max:2048'
+        ], [
+            'file.required' => 'File Excel wajib dipilih',
+            'file.mimes' => 'File harus berformat Excel (.xlsx atau .xls)',
+            'file.max' => 'Ukuran file maksimal 2MB'
+        ]);
+
+        try {
+            $import = new SiswaImport();
+            Excel::import($import, $request->file('file'));
+
+            $imported = $import->getImportedCount();
+            $skipped = $import->getSkippedCount();
+            $failures = $import->failures();
+
+            $message = "Import selesai! {$imported} siswa berhasil diimport.";
+
+            if ($skipped > 0) {
+                $message .= " {$skipped} data dilewati (duplikat atau kelas tidak ditemukan).";
+            }
+
+            if ($failures->count() > 0) {
+                $errorMessages = [];
+                foreach ($failures as $failure) {
+                    $errorMessages[] = "Baris {$failure->row()}: " . implode(', ', $failure->errors());
+                }
+                return redirect()->route($this->routePrefix().'.index')
+                    ->with('warning', $message . ' Namun ada ' . $failures->count() . ' baris dengan error.')
+                    ->with('errors', $errorMessages);
+            }
+
+            return redirect()->route($this->routePrefix().'.index')->with('success', $message);
+        } catch (\Exception $e) {
+            return redirect()->route($this->routePrefix().'.index')
+                ->with('error', 'Terjadi kesalahan saat import: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Export semua data siswa ke Excel
+     */
+    public function export()
+    {
+        return Excel::download(new SiswaExport, 'data_siswa_' . date('Y-m-d') . '.xlsx');
     }
 }
