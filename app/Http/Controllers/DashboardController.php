@@ -30,12 +30,75 @@ class DashboardController extends Controller
     public function admin()
     {
         try {
+            // Get attendance data for the last 7 days
+            $attendanceData = DB::table('absensi_harian')
+                ->select(
+                    'tanggal',
+                    'status_kehadiran',
+                    DB::raw('COUNT(*) as count')
+                )
+                ->whereDate('tanggal', '>=', Carbon::now()->subDays(6))
+                ->groupBy('tanggal', 'status_kehadiran')
+                ->orderBy('tanggal')
+                ->get();
+
+            // Prepare data for Chart.js
+            $dates = [];
+            $hadirData = [];
+            $izinData = [];
+            $sakitData = [];
+            $alpaData = [];
+            $terlambatData = [];
+
+            // Initialize arrays for last 7 days
+            for ($i = 6; $i >= 0; $i--) {
+                $date = Carbon::now()->subDays($i)->format('Y-m-d');
+                $dates[] = Carbon::now()->subDays($i)->format('d/m');
+                $hadirData[$date] = 0;
+                $izinData[$date] = 0;
+                $sakitData[$date] = 0;
+                $alpaData[$date] = 0;
+                $terlambatData[$date] = 0;
+            }
+
+            // Fill data from database
+            foreach ($attendanceData as $record) {
+                $date = $record->tanggal;
+                if (isset($hadirData[$date])) {
+                    switch ($record->status_kehadiran) {
+                        case 'hadir':
+                            $hadirData[$date] = $record->count;
+                            break;
+                        case 'izin':
+                            $izinData[$date] = $record->count;
+                            break;
+                        case 'sakit':
+                            $sakitData[$date] = $record->count;
+                            break;
+                        case 'alpa':
+                            $alpaData[$date] = $record->count;
+                            break;
+                        case 'terlambat':
+                            $terlambatData[$date] = $record->count;
+                            break;
+                    }
+                }
+            }
+
             $data = [
                 'title' => 'Dashboard Admin',
                 'totalSiswa' => DB::table('siswa')->count(),
                 'totalKelas' => DB::table('kelas')->count(),
                 'totalPerangkat' => DB::table('perangkat')->count(),
                 'totalAbsensiToday' => DB::table('absensi_harian')->whereDate('tanggal', Carbon::today())->count(),
+                'attendanceChart' => [
+                    'dates' => $dates,
+                    'hadir' => array_values($hadirData),
+                    'izin' => array_values($izinData),
+                    'sakit' => array_values($sakitData),
+                    'alpa' => array_values($alpaData),
+                    'terlambat' => array_values($terlambatData),
+                ],
             ];
         } catch (QueryException $e) {
             $data = [
@@ -44,6 +107,14 @@ class DashboardController extends Controller
                 'totalKelas' => 0,
                 'totalPerangkat' => 0,
                 'totalAbsensiToday' => 0,
+                'attendanceChart' => [
+                    'dates' => [],
+                    'hadir' => [],
+                    'izin' => [],
+                    'sakit' => [],
+                    'alpa' => [],
+                    'terlambat' => [],
+                ],
             ];
         }
         return view('dashboard.admin', $data);
@@ -83,12 +154,75 @@ class DashboardController extends Controller
     public function kepalaSekolah()
     {
         try {
+            // Get attendance data for the last 7 days
+            $attendanceData = DB::table('absensi_harian')
+                ->select(
+                    'tanggal',
+                    'status_kehadiran',
+                    DB::raw('COUNT(*) as count')
+                )
+                ->whereDate('tanggal', '>=', Carbon::now()->subDays(6))
+                ->groupBy('tanggal', 'status_kehadiran')
+                ->orderBy('tanggal')
+                ->get();
+
+            // Prepare data for Chart.js
+            $dates = [];
+            $hadirData = [];
+            $izinData = [];
+            $sakitData = [];
+            $alpaData = [];
+            $terlambatData = [];
+
+            // Initialize arrays for last 7 days
+            for ($i = 6; $i >= 0; $i--) {
+                $date = Carbon::now()->subDays($i)->format('Y-m-d');
+                $dates[] = Carbon::now()->subDays($i)->format('d/m');
+                $hadirData[$date] = 0;
+                $izinData[$date] = 0;
+                $sakitData[$date] = 0;
+                $alpaData[$date] = 0;
+                $terlambatData[$date] = 0;
+            }
+
+            // Fill data from database
+            foreach ($attendanceData as $record) {
+                $date = $record->tanggal;
+                if (isset($hadirData[$date])) {
+                    switch ($record->status_kehadiran) {
+                        case 'hadir':
+                            $hadirData[$date] = $record->count;
+                            break;
+                        case 'izin':
+                            $izinData[$date] = $record->count;
+                            break;
+                        case 'sakit':
+                            $sakitData[$date] = $record->count;
+                            break;
+                        case 'alpa':
+                            $alpaData[$date] = $record->count;
+                            break;
+                        case 'terlambat':
+                            $terlambatData[$date] = $record->count;
+                            break;
+                    }
+                }
+            }
+
             $data = [
                 'title' => 'Dashboard Kepala Sekolah',
                 'totalSiswa' => DB::table('siswa')->count(),
                 'totalKelas' => DB::table('kelas')->count(),
                 'totalPerangkat' => DB::table('perangkat')->count(),
                 'totalAbsensiToday' => DB::table('absensi_harian')->whereDate('tanggal', Carbon::today())->count(),
+                'attendanceChart' => [
+                    'dates' => $dates,
+                    'hadir' => array_values($hadirData),
+                    'izin' => array_values($izinData),
+                    'sakit' => array_values($sakitData),
+                    'alpa' => array_values($alpaData),
+                    'terlambat' => array_values($terlambatData),
+                ],
             ];
         } catch (QueryException $e) {
             $data = [
@@ -97,6 +231,14 @@ class DashboardController extends Controller
                 'totalKelas' => 0,
                 'totalPerangkat' => 0,
                 'totalAbsensiToday' => 0,
+                'attendanceChart' => [
+                    'dates' => [],
+                    'hadir' => [],
+                    'izin' => [],
+                    'sakit' => [],
+                    'alpa' => [],
+                    'terlambat' => [],
+                ],
             ];
         }
         return view('dashboard.kepala_sekolah', $data);
