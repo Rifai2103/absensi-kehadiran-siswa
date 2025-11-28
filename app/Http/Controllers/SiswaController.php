@@ -16,6 +16,8 @@ class SiswaController extends Controller
     {
         return [
             'nama_siswa' => ['label' => 'Nama Siswa', 'type' => 'text', 'rules' => 'required|string|max:255'],
+            'nis' => ['label' => 'NIS (Nomor Induk Siswa)', 'type' => 'text', 'rules' => 'nullable|string|max:20|unique:siswa,nis'],
+            'nisn' => ['label' => 'NISN (Nomor Induk Siswa Nasional)', 'type' => 'text', 'rules' => 'nullable|string|size:10|unique:siswa,nisn'],
             'jenis_kelamin' => ['label' => 'Jenis Kelamin', 'type' => 'select', 'options' => 'jk', 'rules' => 'required|in:L,P'],
             'template_sidik_jari' => ['label' => 'Template Sidik Jari', 'type' => 'textarea', 'rules' => 'nullable|string'],
             'finger_id' => ['label' => 'Finger ID (dari sensor)', 'type' => 'text', 'rules' => 'nullable|integer|unique:siswa,finger_id'],
@@ -27,7 +29,7 @@ class SiswaController extends Controller
 
     private function columns(): array
     {
-        return ['Nama Siswa', 'JK', 'Kelas', 'Finger ID'];
+        return ['Nama Siswa', 'NIS', 'NISN', 'JK', 'Kelas', 'Finger ID'];
     }
 
     private function options(string $key): array
@@ -83,6 +85,8 @@ class SiswaController extends Controller
                 'id' => $item->id,
                 'cols' => [
                     $item->nama_siswa,
+                    $item->nis ?? '-',
+                    $item->nisn ?? '-',
                     $item->jenis_kelamin,
                     optional($item->kelas)->nama_kelas ?? '-',
                     $item->finger_id ?? '-',
@@ -154,7 +158,13 @@ class SiswaController extends Controller
     public function update(Request $request, Siswa $siswa)
     {
         $rules = collect($this->fields())->mapWithKeys(fn($v,$k)=>[$k=>$v['rules']??''])->filter()->toArray();
-        // Sesuaikan unik finger_id untuk mengabaikan ID saat update
+        // Sesuaikan unik untuk mengabaikan ID saat update
+        if (isset($rules['nis'])) {
+            $rules['nis'] = 'nullable|string|max:20|unique:siswa,nis,' . $siswa->id;
+        }
+        if (isset($rules['nisn'])) {
+            $rules['nisn'] = 'nullable|string|size:10|unique:siswa,nisn,' . $siswa->id;
+        }
         if (isset($rules['finger_id'])) {
             $rules['finger_id'] = 'nullable|integer|unique:siswa,finger_id,' . $siswa->id;
         }

@@ -40,29 +40,31 @@ class DemoSDN03Seeder extends Seeder
         ]);
 
         // Daftar nama siswa (10 per kelas)
+        // Format NIS: 2024 + Kelas (4A/4B) + Nomor Urut (001-010)
+        // Format NISN: 10 digit angka unik nasional
         $siswa4A = [
-            ['nama' => 'Rizky Maulana', 'jk' => 'L', 'ortu' => 'Agus Maulana'],
-            ['nama' => 'Dewi Lestari', 'jk' => 'P', 'ortu' => 'Rina Lestari'],
-            ['nama' => 'Bima Pratama', 'jk' => 'L', 'ortu' => 'Slamet Pratama'],
-            ['nama' => 'Aulia Rahma', 'jk' => 'P', 'ortu' => 'Siti Khotimah'],
-            ['nama' => 'Galih Saputra', 'jk' => 'L', 'ortu' => 'Teguh Saputra'],
-            ['nama' => 'Nadia Putri', 'jk' => 'P', 'ortu' => 'Sri Wahyuni'],
-            ['nama' => 'Fauzan Akbar', 'jk' => 'L', 'ortu' => 'Hendra Akbar'],
-            ['nama' => 'Intan Permata', 'jk' => 'P', 'ortu' => 'Riyanto'],
-            ['nama' => 'Yoga Pratama', 'jk' => 'L', 'ortu' => 'Wahyudi'],
-            ['nama' => 'Salsa Amelia', 'jk' => 'P', 'ortu' => 'Nurhayati'],
+            ['nama' => 'Rizky Maulana', 'jk' => 'L', 'ortu' => 'Agus Maulana', 'nis' => '20244A001', 'nisn' => '0034567801'],
+            ['nama' => 'Dewi Lestari', 'jk' => 'P', 'ortu' => 'Rina Lestari', 'nis' => '20244A002', 'nisn' => '0034567802'],
+            ['nama' => 'Bima Pratama', 'jk' => 'L', 'ortu' => 'Slamet Pratama', 'nis' => '20244A003', 'nisn' => '0034567803'],
+            ['nama' => 'Aulia Rahma', 'jk' => 'P', 'ortu' => 'Siti Khotimah', 'nis' => '20244A004', 'nisn' => '0034567804'],
+            ['nama' => 'Galih Saputra', 'jk' => 'L', 'ortu' => 'Teguh Saputra', 'nis' => '20244A005', 'nisn' => '0034567805'],
+            ['nama' => 'Nadia Putri', 'jk' => 'P', 'ortu' => 'Sri Wahyuni', 'nis' => '20244A006', 'nisn' => '0034567806'],
+            ['nama' => 'Fauzan Akbar', 'jk' => 'L', 'ortu' => 'Hendra Akbar', 'nis' => '20244A007', 'nisn' => '0034567807'],
+            ['nama' => 'Intan Permata', 'jk' => 'P', 'ortu' => 'Riyanto', 'nis' => '20244A008', 'nisn' => '0034567808'],
+            ['nama' => 'Yoga Pratama', 'jk' => 'L', 'ortu' => 'Wahyudi', 'nis' => '20244A009', 'nisn' => '0034567809'],
+            ['nama' => 'Salsa Amelia', 'jk' => 'P', 'ortu' => 'Nurhayati', 'nis' => '20244A010', 'nisn' => '0034567810'],
         ];
         $siswa4B = [
-            ['nama' => 'Rafi Hidayat', 'jk' => 'L', 'ortu' => 'Suharto'],
-            ['nama' => 'Citra Ayu', 'jk' => 'P', 'ortu' => 'Murniati'],
-            ['nama' => 'Dika Ananda', 'jk' => 'L', 'ortu' => 'Surya Ananda'],
-            ['nama' => 'Tiara Kirana', 'jk' => 'P', 'ortu' => 'Kartini'],
-            ['nama' => 'Rendra Wijaya', 'jk' => 'L', 'ortu' => 'Wibowo Wijaya'],
-            ['nama' => 'Aisyah Zahra', 'jk' => 'P', 'ortu' => 'Halimah'],
-            ['nama' => 'Rangga Pradana', 'jk' => 'L', 'ortu' => 'Sutrisno'],
-            ['nama' => 'Nabila Salsabila', 'jk' => 'P', 'ortu' => 'Dewi Sartika'],
-            ['nama' => 'Bagas Saputra', 'jk' => 'L', 'ortu' => 'Sudarsono'],
-            ['nama' => 'Putri Melati', 'jk' => 'P', 'ortu' => 'Yuniarti'],
+            ['nama' => 'Rafi Hidayat', 'jk' => 'L', 'ortu' => 'Suharto', 'nis' => '20244B001', 'nisn' => '0034567811'],
+            ['nama' => 'Citra Ayu', 'jk' => 'P', 'ortu' => 'Murniati', 'nis' => '20244B002', 'nisn' => '0034567812'],
+            ['nama' => 'Dika Ananda', 'jk' => 'L', 'ortu' => 'Surya Ananda', 'nis' => '20244B003', 'nisn' => '0034567813'],
+            ['nama' => 'Tiara Kirana', 'jk' => 'P', 'ortu' => 'Kartini', 'nis' => '20244B004', 'nisn' => '0034567814'],
+            ['nama' => 'Rendra Wijaya', 'jk' => 'L', 'ortu' => 'Wibowo Wijaya', 'nis' => '20244B005', 'nisn' => '0034567815'],
+            ['nama' => 'Aisyah Zahra', 'jk' => 'P', 'ortu' => 'Halimah', 'nis' => '20244B006', 'nisn' => '0034567816'],
+            ['nama' => 'Rangga Pradana', 'jk' => 'L', 'ortu' => 'Sutrisno', 'nis' => '20244B007', 'nisn' => '0034567817'],
+            ['nama' => 'Nabila Salsabila', 'jk' => 'P', 'ortu' => 'Dewi Sartika', 'nis' => '20244B008', 'nisn' => '0034567818'],
+            ['nama' => 'Bagas Saputra', 'jk' => 'L', 'ortu' => 'Sudarsono', 'nis' => '20244B009', 'nisn' => '0034567819'],
+            ['nama' => 'Putri Melati', 'jk' => 'P', 'ortu' => 'Yuniarti', 'nis' => '20244B010', 'nisn' => '0034567820'],
         ];
 
         // Helper untuk membuat siswa dan absensi mingguan
@@ -76,6 +78,8 @@ class DemoSDN03Seeder extends Seeder
                     ],
                     [
                         'nama_siswa' => $info['nama'],
+                        'nis' => $info['nis'] ?? null,
+                        'nisn' => $info['nisn'] ?? null,
                         'jenis_kelamin' => $info['jk'],
                         'template_sidik_jari' => null,
                         'nama_orang_tua' => $info['ortu'],
